@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Test</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+
+<body>
+    <div class="container mt-5">
+        <h2 class="text-center">Select Test for {{ patient.name }}</h2>
+
+        <form method="post" action="{% url 'select_test' patient.id %}">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label class="form-label">Patient Name:</label>
+                <input type="text" class="form-control" value="{{ patient.name }}" disabled>
+            </div>
+
+            <div class="mb-3">
+                <label for="test" class="form-label">Select Test:</label>
+                <select name="test_id" id="test" class="form-control" required onchange="showFactors()">
+                    <option value="" id="testName">-- Select Test --</option>
+                    {% for test in tests %}
+                        <option value="{{ test.id }}" data-factors='[
+                            {% for factor in test.factorsindiagnostictest_set.all %}
+                                {"id": "{{ factor.id }}", "name": "{{ factor.factors }}"}
+                                {% if not forloop.last %},{% endif %}
+                            {% endfor %}
+                        ]'>{{ test.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Factors will be displayed here dynamically -->
+            <div id="factors-container" class="mb-3"></div>
+
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <div class="input-group-text">
+                        <input type="checkbox" name="predefined_header" id="predefined_header" value="on"> 
+                    </div>
+                </div>
+                <label for="checkbox" style="color: blue;"> &nbsp; Do you want pre-defined header ?</label>
+              </div>
+
+            <button type="submit" class="btn btn-primary">Generate Report</button>
+        </form>
+    </div>
+
+    <script>
+        function showFactors() {
+            let testDropdown = document.getElementById("test");
+            let selectedOption = testDropdown.options[testDropdown.selectedIndex];
+            let factorsContainer = document.getElementById("factors-container");
+
+            // Clear previous factors
+            factorsContainer.innerHTML = "";
+
+            // Get factors from the selected test option
+            let factors = JSON.parse(selectedOption.getAttribute("data-factors"));
+
+            // If there are factors, display them
+            if (factors.length > 0) {
+                factors.forEach(factor => {
+                    let factorDiv = document.createElement("div");
+                    factorDiv.classList.add("mb-2");
+
+                    let label = document.createElement("label");
+                    label.textContent = factor.name;
+
+                    let input = document.createElement("input");
+                    input.type = "text";
+                    input.name = "factor_" + factor.id;
+                    input.placeholder = "Enter value";
+                    input.classList.add("form-control");
+
+                    factorDiv.appendChild(label);
+                    factorDiv.appendChild(input);
+                    factorsContainer.appendChild(factorDiv);
+                });
+            }
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

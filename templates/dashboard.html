@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+
+<body>
+
+    <div class="container mt-4">
+        <h1 class="text-center">Pathology Management Dashboard</h1>
+
+        <div class="row mt-4">
+            <!-- Patients Table -->
+
+            <div class="container mt-5">
+
+                <a href="{% url 'add_patient' %}" class="btn btn-success">+ Add Patient</a>
+                <h2 class="mb-4">Patient Management Dashboard</h2>
+
+
+                <table class="table table-bordered">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Tests</th>
+                            <th>Total Price</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for patient in patients %}
+                        <tr>
+                            <td>{{ patient.id }}</td>
+                            <td>{{ patient.name }}</td>
+                            <td>{{ patient.phone }}</td>
+                            <td>
+                                {% for test in patient.tests.all %}
+                                {{ test.name }} ({{ test.price }}) <br>
+                                {% endfor %}
+                            </td>
+                            <td>Rs. {{ patient.total_price }}</td>
+                            <td>
+                                <a href="{% url 'edit_patient' patient.id %}" class="btn btn-warning btn-sm">Edit</a>
+                                <a href="{% url 'delete_patient' patient.id %}" class="btn btn-sm btn-danger">Delete</a>
+
+                                <a href="{% url 'download_receipt' patient.id %}"
+                                    class="btn btn-success btn-sm">Payment Receipt</a>
+
+
+                                <a href="{% url 'select_test' patient.id %}" class="btn btn-primary btn-sm generate-report-btn">
+                                    Generate Report
+                                </a>
+
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+
+            </div>
+
+
+
+
+
+
+        
+
+
+
+
+
+            <div class="row mt-4">
+                <!-- Diagnostic Tests Table -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">Diagnostic Tests</div>
+                        <div class="card-body">
+                            <a href="{% url 'add_test' %}" class="btn btn-success">+ Add Test</a>
+                            <table class="table mt-2">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Price</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for test in tests %}
+                                    <tr>
+                                        <td>{{ test.name }}</td>
+                                        <td>Rs.{{ test.price }}</td>
+                                        <td>
+                                            <button class="btn btn-primary btn-sm" data-bs-toggle="collapse"
+                                                data-bs-target="#factors-{{ test.id }}">
+                                                View Factors
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3">
+                                            <div id="factors-{{ test.id }}" class="collapse">
+                                                <h5>Factors for {{ test.name }}</h5>
+                                                <table class="table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Factor</th>
+                                                            <th>Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for factor in factors %}
+                                                        {% if factor.test_name == test %}
+                                                        <tr>
+                                                            <td>{{ factor.factors }}</td>
+                                                            <td>
+                                                                <a href="{% url 'edit_factor' factor.id %}"
+                                                                    class="btn btn-warning btn-sm">Edit</a>
+                                                                <a href="{% url 'delete_factor' factor.id %}"
+                                                                    class="btn btn-danger btn-sm">Delete</a>
+                                                            </td>
+                                                        </tr>
+                                                        {% endif %}
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                                <a href="{% url 'add_factor' %}?test_id={{ test.id }}"
+                                                    class="btn btn-success btn-sm">+ Add Factor</a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+
+            <div class="row mt-4">
+                <!-- Factors Table -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">Factors</div>
+                        <div class="card-body">
+                            <a href="{% url 'add_factor' %}" class="btn btn-success">+ Add Factor</a>
+                            <table class="table mt-2">
+                                <thead>
+                                    <tr>
+                                        <th>Factor</th>
+                                        <th>Test Name</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for factor in factors %}
+                                    <tr>
+                                        <td>{{ factor.factors }}</td>
+                                        <td>{{ factor.test_name.name }}</td>
+                                        <td>
+                                            <button class="btn btn-info btn-sm" data-bs-toggle="modal"
+                                                data-bs-target="#setDefaultsModal-{{ factor.id }}">
+                                                Set Default Values
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Modal for Setting Default Values -->
+                                    <div class="modal fade" id="setDefaultsModal-{{ factor.id }}" tabindex="-1"
+                                        aria-labelledby="setDefaultsLabel" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Set Default Values for {{ factor.factors }}
+                                                    </h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                        aria-label="Close"></button>
+                                                </div>
+                                                <form method="post" action="{% url 'set_default_values' factor.id %}">
+                                                    {% csrf_token %}
+                                                    <div class="modal-body">
+                                                        <div id="default-values-container-{{ factor.id }}">
+                                                            <div class="row mb-2">
+                                                                <!-- Min Age -->
+                                                                <div class="col">
+                                                                    <label>Min Age</label>
+                                                                    <div class="input-group">
+                                                                        <input type="number" name="min_age[]"
+                                                                            class="form-control" min="0">
+                                                                        <select name="min_age_unit[]"
+                                                                            class="form-select">
+                                                                            <option value="years">Years</option>
+                                                                            <option value="months">Months</option>
+                                                                            <option value="days">Days</option>
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Max Age -->
+                                                                <div class="col">
+                                                                    <label>Max Age</label>
+                                                                    <div class="input-group">
+                                                                        <input type="number" name="max_age[]"
+                                                                            class="form-control" min="0">
+                                                                        <select name="max_age_unit[]"
+                                                                            class="form-select">
+                                                                            <option value="years">Years</option>
+                                                                            <option value="months">Months</option>
+                                                                            <option value="days">Days</option>
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Min & Max Value -->
+                                                                <div class="col">
+                                                                    <label>Min Value</label>
+                                                                    <input type="number" name="min_value[]"
+                                                                        class="form-control" min="0">
+                                                                </div>
+                                                                <div class="col">
+                                                                    <label>Max Value</label>
+                                                                    <input type="number" name="max_value[]"
+                                                                        class="form-control" min="0">
+                                                                </div>
+
+                                                                <!-- Unit -->
+                                                                <div class="col">
+                                                                    <label>Unit</label>
+                                                                    <input type="text" name="unit[]"
+                                                                        class="form-control">
+                                                                </div>
+
+                                                                <!-- Remove Button -->
+                                                                <div class="col-auto">
+                                                                    <button type="button"
+                                                                        class="btn btn-danger btn-sm remove-field">X</button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="submit" class="btn btn-success">Save</button>
+                                                        <button type="button" class="btn btn-secondary"
+                                                            data-bs-dismiss="modal">Close</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </tbody>
+
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Default Factor Values Table -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-warning text-white">Default Factor Values</div>
+                        <div class="card-body">
+                            <table class="table mt-2">
+                                <thead>
+                                    <tr>
+                                        <th>Factor</th>
+                                        <th>Age Range</th>
+                                        <th>Min Value</th>
+                                        <th>Max Value</th>
+                                        <th>Unit</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for value in default_values %}
+                                    <tr>
+                                        <td>{{ value.factor_name.factors }}</td>
+                                        <td>
+                                            {{ value.min_age }} {{ value.min_age_unit }} -
+                                            {{ value.max_age }} {{ value.max_age_unit }}
+                                        </td>
+                                        <td>{{ value.min_value }}</td>
+                                        <td>{{ value.max_value }}</td>
+                                        <td>{{ value.unit }}</td>
+                                        <td>
+                                            <a href="{% url 'edit_default_value' value.id %}"
+                                                class="btn btn-warning btn-sm">Edit</a>
+
+
+                                            <a href="{% url 'delete_default_value' value.id %}"
+                                                class="btn btn-danger btn-sm"
+                                                onclick="return confirm('Are you sure you want to delete this default value?');">
+                                                Delete
+                                            </a>
+
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+       
+
+
+</body>
+
+</html>
